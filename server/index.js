@@ -21,6 +21,15 @@ import { VFSBridge } from './vfsBridge.js';
 import { toolService } from './toolService.js';
 import { agentOrchestrator } from './agentOrchestrator.js';
 import { ultimateAgentOrchestrator } from './ultimateAgentOrchestrator.js';
+import { memoryManager } from './memoryManagementSystem.js';
+import { responseCache } from './adaptiveResponseCache.js';
+import { listenerManager } from './eventListenerManager.js';
+import { compactionEngine } from './compactionEngine.js';
+import { compactionScheduler } from './backgroundCompactionScheduler.js';
+
+memoryManager.registerCleanup(() => responseCache.clear());
+memoryManager.start();
+compactionScheduler.start();
 
 const app = express();
 const router = express.Router();
@@ -453,6 +462,52 @@ router.post('/chat/stream', async (req, res) => {
     ollamaHost: OLLAMA_HOST,
     req,
     res
+  });
+});
+
+/**
+ * PERFORMANCE & MEMORY TELEMETRY API
+ */
+router.get('/performance/metrics', (req, res) => {
+  res.json({
+    success: true,
+    metrics: {
+      memory: memoryManager.getMemoryReport(),
+      cache: responseCache.getStats(),
+      listeners: listenerManager.getStats()
+    }
+  });
+});
+
+router.post('/performance/gc', async (req, res) => {
+  const before = memoryManager.getMemoryUsage();
+  const after = await memoryManager.performCleanup();
+  res.json({ success: true, before, after });
+});
+
+router.post('/performance/cache/clear', (req, res) => {
+  responseCache.clear();
+  res.json({ success: true, message: 'All response caches cleared' });
+});
+
+/**
+ * CONVERSATION COMPACTION API
+ */
+router.post('/compaction/compact', async (req, res) => {
+  try {
+    const { conversation, options } = req.body;
+    const result = await compactionEngine.compactConversation(conversation || {}, options || {});
+    res.json({ success: true, result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/compaction/stats', (req, res) => {
+  res.json({
+    success: true,
+    stats: compactionEngine.getStats(),
+    scheduler: compactionScheduler.getStats()
   });
 });
 
