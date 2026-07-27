@@ -21,12 +21,13 @@
 
 **NexusAI** is a complete, enterprise-grade autonomous AI development platform that bridges high-speed LLM reasoning with real-time, physical Virtual File System (VFS) disk generation. 
 
-Designed to operate as a **Senior Principal Software Engineer & System Architect**, NexusAI automates software design, multi-file code generation, AST code auditing, OWASP security scanning, intelligent refactoring, test generation, adaptive performance optimization, and background conversation compaction—all powered by high-performance local LLMs (Ollama Qwen2.5-Coder) with **zero cloud dependencies** and **zero-trust permission controls**.
+Designed to operate as a **Senior Principal Software Engineer & System Architect**, NexusAI automates software design, multi-file code generation, AST code auditing, OWASP security scanning, intelligent refactoring, test generation, adaptive performance optimization, background conversation compaction, and pre-seeded single-user authentication—all powered by high-performance local LLMs (Ollama Qwen2.5-Coder) with **zero cloud dependencies** and **zero-trust permission controls**.
 
 ---
 
 ## ✨ Key Features
 
+- 🔒 **Single-User Admin Authentication**: Pre-seeded administrator account (`admin` / `Admin@NexusAI123!`) with `crypto.scrypt` password hashing, 24-hour signed session tokens, and disabled public self-registration (`403 Forbidden`).
 - 📁 **Autonomous Workspace File Generation**: Directly writes production-ready code files and directory trees to disk with atomic operations, `.backup-[timestamp]` safeguards, and post-write empirical verification (`fs.access`, `stat.size`, readback matching).
 - 🧠 **7 Deep Intelligence Engines**:
   - `ArchitectureAnalyzer`: Detects system tiers (Monolith, Microservices, Serverless), layer boundaries, design patterns (MVC, Hexagonal, DDD, Event-Driven), and anti-patterns (God Objects, Spaghetti code).
@@ -55,9 +56,10 @@ Designed to operate as a **Senior Principal Software Engineer & System Architect
 
 ```mermaid
 graph TD
-    Client[React 19 SPA Frontend] -->|SSE Stream / JSON| ExpressServer[Express SSE Server :3005]
+    Client[React 19 SPA Frontend / Login Portal] -->|Bearer Token Header| AuthMiddleware[Express AuthMiddleware & Security Guard]
     
     subgraph Core Orchestration Layer
+        AuthMiddleware --> ExpressServer[Express SSE API Server :3005]
         ExpressServer --> UltimateOrchestrator[UltimateAgentOrchestrator]
         UltimateOrchestrator --> SystemPromptFactory[SystemPromptFactory & Injector]
         UltimateOrchestrator --> Classifier[Intent Router & Classifier]
@@ -114,10 +116,11 @@ graph TD
 
 ## 🧠 Deep Intelligent Software Engineer & Sub-Engines
 
-NexusAI embeds specialized sub-engines across analysis, performance, and memory management:
+NexusAI embeds specialized sub-engines across security, analysis, performance, and state compaction:
 
 ```
 server/
+├── authService.js                     # Admin auth, scrypt password hash & JWT session middleware
 ├── architectureAnalyzer.js            # System tier, layer boundary & design pattern detection
 ├── codeIntelligenceEngine.js          # AST parsing, Cyclomatic/Cognitive complexity, dependency graph
 ├── codeReviewEngine.js                # OWASP security vulnerability audit & code smell detection
@@ -140,6 +143,11 @@ server/
 ---
 
 ## 🔌 API Reference
+
+### Authentication Endpoints
+- `POST /api/auth/login`: Authenticates administrator credentials (`admin` / `Admin@NexusAI123!`) and returns session token.
+- `POST /api/auth/register`: Disabled (403 Forbidden).
+- `GET /api/auth/me`: Returns active session user context.
 
 ### Chat & Streaming Endpoint
 - `POST /api/chat/stream`: High-speed Server-Sent Events (SSE) streaming endpoint. Consumes messages, mode, system prompts, workspace path, and `chatConfig`. Parses file and directory code blocks and writes files to physical disk in real time.
@@ -186,7 +194,7 @@ server/
 - **Process Manager**: `pm2`
 - **Local LLM Engine**: [Ollama](https://ollama.com) listening on `http://localhost:11434` with model `qwen2.5:1.5b` or `qwen2.5-coder:14b`.
 
-### 2. Installation
+### 2. Installation & Credentials
 ```bash
 # Clone the repository
 git clone https://github.com/xuspanel/NexusAI.git
@@ -198,6 +206,10 @@ npm install
 # Build frontend production bundle
 npm run build
 ```
+
+> **Default Admin Access Credentials**:
+> - **Username**: `admin`
+> - **Password**: `Admin@NexusAI123!`
 
 ### 3. Running the Server
 ```bash

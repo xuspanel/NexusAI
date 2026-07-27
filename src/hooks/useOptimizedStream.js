@@ -26,9 +26,13 @@ export function useOptimizedStream() {
     timerIdRef.current = setTimeout(flushBuffer, 50);
 
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('nexusai_auth_token') : null;
       const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         signal: abortController.signal,
         body: JSON.stringify(body)
       });

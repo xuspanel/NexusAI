@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChatProvider, useChat } from './context/ChatContext';
+import { LoginScreen } from './components/Auth/LoginScreen';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import WelcomeHero from './components/ChatArea/WelcomeHero';
@@ -14,7 +15,7 @@ import WorkspaceModal from './components/Modals/WorkspaceModal';
 import WorkflowBuilder from './components/Workflows/WorkflowBuilder';
 import ParticleBackground from './components/Background/ParticleBackground';
 
-function AppContent() {
+function AppContent({ onLogout }) {
   const { 
     activeWorkspace, 
     activeThread, 
@@ -55,7 +56,7 @@ function AppContent() {
       <ParticleBackground />
 
       {/* Main Header */}
-      <Navbar />
+      <Navbar onLogout={onLogout} />
 
       <div style={{ display: 'flex', flex: 1, height: 'calc(100vh - var(--header-height))', overflow: 'hidden', position: 'relative', zIndex: 10 }}>
         <Sidebar />
@@ -154,9 +155,25 @@ function AppContent() {
 }
 
 export default function App() {
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('nexusai_auth_token'));
+
+  const handleLoginSuccess = (token) => {
+    setAuthToken(token);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('nexusai_auth_token');
+    localStorage.removeItem('nexusai_auth_user');
+    setAuthToken(null);
+  };
+
+  if (!authToken) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <ChatProvider>
-      <AppContent />
+      <AppContent onLogout={handleLogout} />
     </ChatProvider>
   );
 }

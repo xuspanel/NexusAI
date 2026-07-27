@@ -26,13 +26,18 @@ import { responseCache } from './adaptiveResponseCache.js';
 import { listenerManager } from './eventListenerManager.js';
 import { compactionEngine } from './compactionEngine.js';
 import { compactionScheduler } from './backgroundCompactionScheduler.js';
+import { initAuthSystem, authenticateUser, verifyToken, authMiddleware } from './authService.js';
 
 memoryManager.registerCleanup(() => responseCache.clear());
 memoryManager.start();
 compactionScheduler.start();
+initAuthSystem();
 
 const app = express();
 const router = express.Router();
+
+// Apply Authentication Middleware
+router.use(authMiddleware);
 
 const PORT = process.env.PORT || 3005;
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
@@ -51,6 +56,33 @@ app.use(
 
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
+
+/**
+ * AUTHENTICATION REST ENDPOINTS
+ */
+router.post('/auth/login', (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const result = authenticateUser(username, password);
+    res.json(result);
+  } catch (err) {
+    res.status(401).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/auth/register', (req, res) => {
+  res.status(403).json({
+    success: false,
+    error: 'Self-registration is disabled. Access is strictly restricted to the administrator account.'
+  });
+});
+
+router.get('/auth/me', (req, res) => {
+  res.json({
+    success: true,
+    user: req.user || { username: 'admin', role: 'administrator' }
+  });
+});
 
 // Initialize PostgreSQL Database Engine
 initDatabase();

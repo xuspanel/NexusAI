@@ -10,6 +10,15 @@ export function getApiUrl(endpoint) {
   return endpoint;
 }
 
+export async function fetchWithAuth(url, options = {}) {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('nexusai_auth_token') : null;
+  const headers = {
+    ...options.headers,
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+  return fetch(getApiUrl(url), { ...options, headers });
+}
+
 export const DEFAULT_CHAT_CONFIG = {
   displayMode: 'workspace', // 'chat' | 'workspace' | 'hybrid'
   showNotifications: true,
@@ -166,7 +175,7 @@ export function ChatProvider({ children }) {
   useEffect(() => {
     const fetchDBConversations = async () => {
       try {
-        const res = await fetch(getApiUrl('/api/conversations'));
+        const res = await fetchWithAuth('/api/conversations');
         const data = await res.json();
         if (data.success && data.conversations.length > 0) {
           const formatted = data.conversations.map((c) => ({
@@ -193,7 +202,7 @@ export function ChatProvider({ children }) {
 
     const fetchMessages = async () => {
       try {
-        const res = await fetch(getApiUrl(`/api/conversations/${activeThreadId}/messages`));
+        const res = await fetchWithAuth(`/api/conversations/${activeThreadId}/messages`);
         const data = await res.json();
         if (data.success) {
           setConversations((prev) =>
@@ -212,7 +221,7 @@ export function ChatProvider({ children }) {
   useEffect(() => {
     const fetchOllamaModels = async () => {
       try {
-        const res = await fetch(getApiUrl('/api/ollama/models'));
+        const res = await fetchWithAuth('/api/ollama/models');
         const data = await res.json();
         if (data.success && data.models.length > 0) {
           const merged = [...data.models, ...DEFAULT_MODELS];

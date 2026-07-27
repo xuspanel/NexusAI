@@ -14,13 +14,14 @@ import {
   Shield,
   Layers,
   Folder,
-  X
+  X,
+  LogOut
 } from 'lucide-react';
 import { useChat } from '../context/ChatContext';
 import { AGENT_MODES } from '../config/agentModes';
 import SystemMonitor from './Telemetry/SystemMonitor';
 
-export default function Navbar() {
+export default function Navbar({ onLogout }) {
   const { 
     availableModels,
     selectedModel, 
@@ -348,6 +349,18 @@ export default function Navbar() {
         >
           <Settings size={16} />
         </button>
+
+        {/* Logout Session Button */}
+        {onLogout && (
+          <button 
+            onClick={onLogout}
+            className="btn-icon" 
+            style={{ color: 'var(--accent-rose)' }}
+            title="Log Out Administrator Session"
+          >
+            <LogOut size={16} />
+          </button>
+        )}
       </div>
     </header>
   );
